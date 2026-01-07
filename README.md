@@ -231,7 +231,7 @@ try {
 ## AI回答：绘图板编辑功能实现指南（基于已有框架扩展）
 编辑功能是绘图板的核心扩展能力，**所有编辑操作必须封装为Command对象以支持撤销/重做**，同时需基于“图形选中”这一基础能力展开。以下先明确编辑功能的核心清单，再分步实现（兼容已有MFC+GDI+设计模式框架）。
 
-## 一、编辑功能核心清单（需实现的核心能力）
+### 一、编辑功能核心清单（需实现的核心能力）
 | 功能编号 | 编辑功能       | 详细说明                                                                 | 关联设计模式/技术 |
 |----------|----------------|--------------------------------------------------------------------------|-------------------|
 | E-01     | 图形选中       | 支持**单点选中**（鼠标点击图形）、**框选**（鼠标拖动选框选中多个图形）；<br>选中后有视觉反馈（如虚线边框、高亮） | 碰撞检测（HitTest）+ GDI样式绘制 |
@@ -241,10 +241,10 @@ try {
 | E-05     | 图形复制粘贴   | 选中图形后，按`Ctrl+C`复制、`Ctrl+V`粘贴（粘贴为新图形，位置偏移）       | 剪贴板序列化 + Command模式（封装粘贴操作） |
 | E-06     | 编辑模式切换   | 工具栏添加“选择工具”，切换“绘图模式”/“编辑模式”，避免操作冲突           | 状态管理（模式标记） |
 
-## 二、前期准备：扩展核心接口与状态管理
+### 二、前期准备：扩展核心接口与状态管理
 编辑功能依赖**图形的交互能力**（如命中检测、属性修改）和**选中状态管理**，需先扩展已有接口和数据结构：
 
-### 步骤1：扩展`IShape`接口（添加编辑必备方法）
+#### 步骤1：扩展`IShape`接口（添加编辑必备方法）
 在原有`IShape`接口中新增纯虚函数，支持命中检测、边界获取、属性修改等能力：
 ```cpp
 // Shape.h
@@ -282,7 +282,7 @@ public:
 };
 ```
 
-### 步骤2：实现子类的扩展方法（以直线、矩形为例）
+#### 步骤2：实现子类的扩展方法（以直线、矩形为例）
 以`CLineShape`（直线）和`CRectShape`（矩形）为例，实现新增的编辑方法：
 ```cpp
 // LineShape.cpp
@@ -324,7 +324,7 @@ bool CRectShape::HitTest(const CPoint& point, int tolerance) const {
 }
 ```
 
-### 步骤3：扩展文档类，管理选中状态
+#### 步骤3：扩展文档类，管理选中状态
 在`CDrawingDoc`中添加选中图形的管理逻辑，作为MVC中Model层的一部分：
 ```cpp
 // DrawingDoc.h
@@ -356,11 +356,11 @@ public:
 };
 ```
 
-## 三、核心编辑功能实现
-### 步骤4：图形选中功能（E-01）—— 单点选中+框选
+### 三、核心编辑功能实现
+#### 步骤4：图形选中功能（E-01）—— 单点选中+框选
 选中功能是所有编辑操作的基础，需在`CDrawingView`中处理鼠标事件，实现选中逻辑。
 
-#### 4.1 新增视图层成员变量（记录选框和编辑状态）
+##### 4.1 新增视图层成员变量（记录选框和编辑状态）
 ```cpp
 // DrawingView.h
 class CDrawingView : public CView {
@@ -381,7 +381,7 @@ private:
 };
 ```
 
-#### 4.2 处理鼠标事件，实现选中逻辑
+##### 4.2 处理鼠标事件，实现选中逻辑
 重写`OnLButtonDown`、`OnMouseMove`、`OnLButtonUp`，区分**绘图模式**和**编辑模式**：
 ```cpp
 // DrawingView.cpp
@@ -502,7 +502,7 @@ void CDrawingView::OnDraw(CDC* pDC) {
 }
 ```
 
-### 步骤5：图形移动功能（E-02）—— 封装为Command
+#### 步骤5：图形移动功能（E-02）—— 封装为Command
 所有编辑操作必须封装为`ICommand`子类，以支持撤销/重做。实现`CMoveShapeCommand`：
 ```cpp
 // Command.h
@@ -552,7 +552,7 @@ void CDrawingView::FinishMoveShape(int dx, int dy) {
 }
 ```
 
-### 步骤6：图形属性修改（E-03）—— 封装为Command
+#### 步骤6：图形属性修改（E-03）—— 封装为Command
 实现`CModifyShapeCommand`，记录图形修改前的属性，支持撤销：
 ```cpp
 // 保存图形的原始属性（用于撤销）
@@ -609,7 +609,7 @@ void CPropertyPanel::OnBtnApply() {
 }
 ```
 
-### 步骤7：图形删除功能（E-04）—— 封装为Command
+#### 步骤7：图形删除功能（E-04）—— 封装为Command
 实现`CDeleteShapeCommand`，记录被删除的图形和位置，支持撤销（恢复图形）：
 ```cpp
 class CDeleteShapeCommand : public ICommand {
@@ -693,7 +693,7 @@ void CDrawingView::OnCopy() {
 }
 ```
 
-#### 8.2 粘贴：从剪贴板反序列化并创建新图形
+##### 8.2 粘贴：从剪贴板反序列化并创建新图形
 ```cpp
 // 粘贴命令
 class CPasteShapeCommand : public ICommand {
@@ -756,7 +756,7 @@ void CDrawingView::OnPaste() {
 }
 ```
 
-### 步骤9：编辑模式切换（E-06）
+#### 步骤9：编辑模式切换（E-06）
 在工具栏添加“选择工具”按钮，绑定点击事件，切换`m_isEditMode`状态：
 ```cpp
 // 工具栏选择工具点击事件
@@ -778,14 +778,14 @@ void CMainFrame::OnToolLine() {
 }
 ```
 
-## 四、技术要点与注意事项
+### 四、技术要点与注意事项
 1. **选中检测容差**：`HitTest`方法中的`tolerance`参数（默认2~5像素）可提升用户体验，避免鼠标必须精准点中图形才能选中。
 2. **图形层级**：后绘制的图形应优先被选中（反向遍历图形列表），符合用户直觉。
 3. **撤销/重做的完整性**：所有编辑操作的Command必须记录足够的上下文（如移动的偏移量、修改前的属性、删除的位置），确保撤销后完全恢复状态。
 4. **剪贴板格式**：使用自定义剪贴板格式（`CF_CUSTOMDATA`）避免与系统格式冲突，序列化时需兼容所有图形类型。
 5. **性能优化**：框选时若图形数量较多，可采用空间分区（如四叉树）优化碰撞检测，避免遍历所有图形。
 
-## 五、验证方式
+### 五、验证方式
 1. **选中功能**：点击图形可选中（显示红色虚线边框），拖动鼠标框选可选中多个图形，按住Ctrl可追加选中。
 2. **移动功能**：选中图形后拖动，图形跟随鼠标移动，松开后固定，按`Ctrl+Z`可撤销移动。
 3. **属性修改**：选中图形后修改颜色/线宽，属性同步更新，按`Ctrl+Z`可恢复原属性。
@@ -793,7 +793,7 @@ void CMainFrame::OnToolLine() {
 5. **复制粘贴**：选中图形按`Ctrl+C`复制，`Ctrl+V`粘贴出偏移的新图形，粘贴操作可撤销。
 6. **模式切换**：点击“选择工具”后无法绘图，点击“直线工具”后无法编辑，切换正常。
 
-## Prompt：项目的卷框架图如图片所示，怎么修改各个部分的代码，要求输出示例代码和说明
+## Prompt：项目的框架图如图片所示，怎么修改各个部分的代码，要求输出示例代码和说明
 ## AI回答：要适配你当前的MFC项目框架（截图中的文件结构），需通过**新增核心文件+扩展现有文件**来实现编辑功能，以下是对应项目结构的修改步骤：
 
 ### 一、第一步：新增图形相关核心文件（补全数据层）
@@ -1759,7 +1759,7 @@ void CMFC_drawView::SetCurrentTool(ShapeType tool) {
 }
 ```
 
-## 配套的 MFC_drawView.h 关键修改（仅补充成员变量）
+### 配套的 MFC_drawView.h 关键修改（仅补充成员变量）
 需在 `MFC_drawView.h` 中添加以下成员变量声明（无需新增其他内容）：
 ```cpp
 // MFC_drawView.h
@@ -1813,7 +1813,7 @@ protected:
 };
 ```
 
-## 核心功能使用说明
+### 核心功能使用说明
 1. **模式切换**：在主框架（MainFrm.cpp）中调用 `SetEditMode(true)` 进入编辑模式，`SetEditMode(false)` 回到绘图模式；
 2. **工具切换**：调用 `SetCurrentTool(SHAPE_LINE)`/`SetCurrentTool(SHAPE_RECT)` 切换绘图工具；
 3. **编辑操作**：
@@ -1823,7 +1823,7 @@ protected:
    - 按 `Ctrl+Z` 撤销、`Ctrl+Y` 重做所有操作；
 4. **绘图操作**：绘图模式下，按住鼠标拖动绘制直线/矩形，松开完成绘制。
 
-### 总结
+#### 总结
 1. 所有核心逻辑（图形、命令、工厂）均内联在 `MFC_drawView.cpp` 中，**无新增文件**，完全适配原有项目框架；
 2. 保留MFC标准的文档/视图结构，双缓冲绘制防闪烁，编辑操作封装为Command支持撤销/重做；
 3. 核心编辑功能（选中、移动、删除、模式切换）完整实现，可直接编译运行；
@@ -1833,7 +1833,7 @@ protected:
 ## AI回答：DrawCommand.cpp 完整实现（绘图命令类）
 以下是**独立的 DrawCommand.cpp** 实现（配套 DrawCommand.h 头文件），所有绘图/编辑命令类均集中在此，与 `MFC_drawDoc`/`MFC_drawView` 解耦，符合“不全部放一个文件”的要求，同时兼容原有MFC框架：
 
-## 第一步：先补充 DrawCommand.h 头文件（必须）
+### 第一步：先补充 DrawCommand.h 头文件（必须）
 ```cpp
 // DrawCommand.h: 绘图命令类的头文件
 #pragma once
@@ -2114,8 +2114,8 @@ void CommandManager::Redo() {
 }
 ```
 
-## 第三步：与其他文件的衔接要求
-### 1. MFC_drawDoc.h 需补充的接口（支撑命令类）
+### 第三步：与其他文件的衔接要求
+#### 1. MFC_drawDoc.h 需补充的接口（支撑命令类）
 ```cpp
 // MFC_drawDoc.h 中添加以下公共接口（已在命令类中调用）
 class CMFC_drawDoc : public CDocument {
@@ -2136,7 +2136,7 @@ private:
 };
 ```
 
-### 2. MFC_drawView 中使用命令类的示例
+#### 2. MFC_drawView 中使用命令类的示例
 ```cpp
 // MFC_drawView.cpp 中调用命令的示例（以绘制图形为例）
 void CMFC_drawView::OnLButtonUp(UINT nFlags, CPoint point) {
@@ -2168,7 +2168,7 @@ void CMFC_drawView::FinishMoveShape(int dx, int dy) {
 }
 ```
 
-## 核心设计要点
+### 核心设计要点
 1. **解耦性**：命令类仅依赖 `IShape` 接口和 `CMFC_drawDoc` 的公共接口，不直接耦合视图类，符合“开闭原则”；
 2. **MFC规范**：使用 `ASSERT_VALID` 确保指针有效性，遵循MFC的断言和内存管理习惯；
 3. **撤销/重做完整性**：
@@ -2177,7 +2177,7 @@ void CMFC_drawView::FinishMoveShape(int dx, int dy) {
    - 移动/修改命令记录反向操作数据，确保撤销后完全回滚；
 4. **用户体验**：新增命令自动清空重做栈，符合主流绘图软件的操作逻辑。
 
-### 总结
+#### 总结
 1. `DrawCommand.cpp` 集中实现所有命令类，职责单一，便于维护；
 2. 命令类通过文档类的公共接口操作图形，不直接访问文档的私有成员，符合封装原则；
 3. 命令管理器统一管理撤销/重做栈，无需在视图类中重复编写栈逻辑；
@@ -2187,8 +2187,8 @@ void CMFC_drawView::FinishMoveShape(int dx, int dy) {
 ## 撤销（Undo）/重做（Redo）功能实现指南（基于Command模式）
 你需要的撤销/重做功能核心是**Command模式+双栈管理**：将每个绘图/编辑操作封装为独立的`Command`对象，用“撤销栈（Undo Stack）”存储已执行的操作，用“重做栈（Redo Stack）”存储已撤销的操作，通过操作两个栈实现回滚和恢复。以下是完整的原理介绍、示例代码和集成步骤。
 
-## 一、核心原理
-### 1. 核心思想
+### 一、核心原理
+#### 1. 核心思想
 - **Command封装**：把“绘制图形”“移动图形”“删除图形”等每一个操作都封装成一个`Command`对象，每个对象必须实现`Execute()`（执行操作）和`Undo()`（撤销操作）两个核心方法，且`Undo`是`Execute`的逆操作。
 - **双栈管理**：
   - **Undo栈**：存储所有已执行完成的Command对象（按执行顺序压栈）；
@@ -2200,15 +2200,15 @@ void CMFC_drawView::FinishMoveShape(int dx, int dy) {
   | 撤销       | 从Undo栈弹出最后一个Command，执行`Undo()`，将其压入Redo栈；               |
   | 重做       | 从Redo栈弹出最后一个Command，执行`Execute()`，将其压回Undo栈；             |
 
-### 2. 关键约束
+#### 2. 关键约束
 - 每个Command的`Execute`和`Undo`必须**完全互逆**（比如移动图形偏移+10，撤销就要偏移-10；删除图形要记录原位置，撤销要恢复到原位置）；
 - 新操作执行后必须清空Redo栈（比如绘制新图形后，之前的重做历史就失效了，符合用户直觉）；
 - 栈为空时，撤销/重做操作需静默失败（不报错、不崩溃）。
 
-## 二、完整示例代码
+### 二、完整示例代码
 以下代码基于你现有的`DrawCommand`框架，包含**Command基类、具体命令、命令管理器、MFC视图集成**全流程：
 
-### 步骤1：前置依赖（IShape/ShapeInfo/MFC_drawDoc简化版）
+#### 步骤1：前置依赖（IShape/ShapeInfo/MFC_drawDoc简化版）
 先定义基础的图形接口和文档类（支撑命令执行）：
 ```cpp
 // IShape.h（图形接口）
@@ -2267,7 +2267,7 @@ private:
 };
 ```
 
-### 步骤2：Command类与命令管理器（核心）
+#### 步骤2：Command类与命令管理器（核心）
 ```cpp
 // DrawCommand.h
 #pragma once
@@ -2385,7 +2385,7 @@ private:
 };
 ```
 
-### 步骤3：MFC视图类集成（绑定快捷键/菜单）
+#### 步骤3：MFC视图类集成（绑定快捷键/菜单）
 ```cpp
 // MFC_drawView.h（视图类头文件）
 #pragma once
@@ -2469,26 +2469,26 @@ void CMFC_drawView::OnMouseMove(UINT nFlags, CPoint point) {
 }
 ```
 
-### 步骤4：MFC快捷键配置（可选，提升体验）
+#### 步骤4：MFC快捷键配置（可选，提升体验）
 在项目的“资源视图”中，找到“Accelerator”（加速键），添加：
 | ID           | 键       | 类型  |
 |--------------|----------|-------|
 | ID_EDIT_UNDO | Ctrl+Z   | VIRTKEY |
 | ID_EDIT_REDO | Ctrl+Y   | VIRTKEY |
 
-## 三、功能验证示例
-### 场景1：绘制图形后撤销/重做
+### 三、功能验证示例
+#### 场景1：绘制图形后撤销/重做
 1. 绘制一条直线 → `CDrawShapeCmd` 被压入Undo栈，Redo栈为空；
 2. 按`Ctrl+Z` → Undo栈弹出命令，执行`Undo()`（删除直线），命令压入Redo栈；
 3. 按`Ctrl+Y` → Redo栈弹出命令，执行`Execute()`（重新绘制直线），命令压回Undo栈；
 4. 再绘制一个矩形 → 新的`CDrawShapeCmd`压入Undo栈，**Redo栈被清空**（之前的重做历史失效）。
 
-### 场景2：移动图形后撤销/重做
+#### 场景2：移动图形后撤销/重做
 1. 选中直线，拖动移动10像素 → `CMoveShapeCmd` 压入Undo栈；
 2. 按`Ctrl+Z` → 直线回退10像素，命令压入Redo栈；
 3. 按`Ctrl+Y` → 直线再次移动10像素，命令压回Undo栈。
 
-## 四、关键优化点（可选）
+### 四、关键优化点（可选）
 1. **栈容量限制**：避免Undo栈无限增长（比如限制最多保存50步操作）：
    ```cpp
    void CommandManager::DoCommand(std::shared_ptr<ICommand> cmd) {
@@ -2507,13 +2507,13 @@ void CMFC_drawView::OnMouseMove(UINT nFlags, CPoint point) {
    ```
 3. **批量命令**：比如“删除多个图形”可封装为一个`CBatchCmd`，支持一次撤销多个操作。
 
-## 五、总结
-### 核心关键点
+### 五、总结
+#### 核心关键点
 1. **Command模式是基础**：每个操作必须封装为Command对象，确保`Execute`和`Undo`互逆；
 2. **双栈管理是核心**：Undo栈存已执行操作，Redo栈存已撤销操作，新操作清空Redo栈；
 3. **MFC集成要简洁**：命令管理器由视图持有，通过消息响应绑定快捷键/菜单，操作后调用`Invalidate`刷新界面。
 
-### 核心代码回顾
+#### 核心代码回顾
 1. `CommandManager`的`DoCommand/Undo/Redo`是撤销/重做的核心入口；
 2. 每个具体Command（如`CDrawShapeCmd`）必须实现精准的`Undo`逻辑（比如记录图形位置）；
 3. 视图类通过`DoCommand`执行所有操作，统一交由管理器处理栈逻辑。
@@ -2524,7 +2524,7 @@ void CMFC_drawView::OnMouseMove(UINT nFlags, CPoint point) {
 ## AI回答：不新增文件的 CMFC_drawView.cpp 完整实现（含编辑功能）
 你反馈的 `CMoveShapeCmd` 构造函数报错，核心原因主要集中在**成员变量未正确声明**、**类型不匹配**、**初始化列表顺序错误**或**前向声明不完整**这几类。以下是完整的报错原因分析和修复后的可运行代码：
 
-## 一、先明确核心报错原因（常见4类）
+### 一、先明确核心报错原因（常见4类）
 | 报错类型                | 具体表现                                                                 |
 |-------------------------|--------------------------------------------------------------------------|
 | 成员变量未声明          | 编译器提示 `m_doc/m_selected/m_dx/m_dy` 未定义                          |
@@ -2532,8 +2532,8 @@ void CMFC_drawView::OnMouseMove(UINT nFlags, CPoint point) {
 | 初始化列表顺序错误      | C++要求初始化列表顺序必须和成员变量**声明顺序**一致，否则触发警告/错误    |
 | 前向声明不完整          | `CMFC_drawDoc`/`IShape` 仅前向声明但未包含头文件，导致引用/指针无法使用   |
 
-## 二、修复后的完整代码（可直接替换）
-### 第一步：确保头文件依赖完整（DrawCommand.h）
+### 二、修复后的完整代码（可直接替换）
+#### 第一步：确保头文件依赖完整（DrawCommand.h）
 ```cpp
 // DrawCommand.h
 #pragma once
@@ -2583,7 +2583,7 @@ private:
 };
 ```
 
-### 第二步：验证文档类和图形接口的完整性（关键依赖）
+#### 第二步：验证文档类和图形接口的完整性（关键依赖）
 确保 `CMFC_drawDoc` 和 `IShape` 的声明无语法错误，且包含必要的方法：
 ```cpp
 // IShape.h（必须包含Move方法）
@@ -2623,8 +2623,8 @@ private:
 };
 ```
 
-## 三、关键修复点解释
-### 1. 成员变量声明（最常见报错原因）
+### 三、关键修复点解释
+#### 1. 成员变量声明（最常见报错原因）
 ❌ 错误：未在 `CMoveShapeCmd` 中声明 `m_doc/m_selected/m_dx/m_dy`，或类型不匹配（比如 `m_selected` 声明为指针但传引用）。
 ✅ 修复：在 `private` 段明确声明所有成员变量，类型与构造函数参数一致。
 
@@ -2638,11 +2638,11 @@ CMoveShapeCmd(...) : m_selected(selected), m_doc(doc), m_dx(dx), m_dy(dy) {}
 ```
 ✅ 修复：初始化列表顺序严格匹配成员声明顺序（`m_doc` → `m_dx` → `m_dy` → `m_selected`）。
 
-### 3. 避免悬空引用（隐藏坑）
+#### 3. 避免悬空引用（隐藏坑）
 ❌ 错误：将 `m_selected` 声明为 `const std::vector<...>&`（引用），若传入的 `selected` 是临时对象，会导致生命周期结束后悬空。
 ✅ 修复：将 `m_selected` 声明为值类型（`std::vector<...>`），构造时拷贝选中的图形列表，确保生命周期独立。
 
-### 4. 头文件依赖完整
+#### 4. 头文件依赖完整
 ❌ 错误：仅前向声明 `class CMFC_drawDoc;` 但未包含头文件，导致编译器无法识别 `CMFC_drawDoc*` 的合法性。
 ✅ 修复：在 `DrawCommand.h` 中直接包含 `MFC_drawDoc.h` 和 `IShape.h`，确保类型完整。
 
@@ -2676,7 +2676,7 @@ void CMFC_drawView::OnMouseMove(UINT nFlags, CPoint point) {
 }
 ```
 
-## 五、编译报错排查步骤
+### 五、编译报错排查步骤
 如果仍有报错，按以下顺序排查：
 1. 检查 `CMoveShapeCmd` 的 `private` 段是否声明了所有成员变量；
 2. 检查初始化列表顺序是否与成员声明顺序一致；
@@ -2684,7 +2684,7 @@ void CMFC_drawView::OnMouseMove(UINT nFlags, CPoint point) {
 4. 检查 `CMFC_drawDoc` 是否包含 `GetSelected()` 方法，且返回值类型为 `const std::vector<std::shared_ptr<IShape>>&`；
 5. 检查所有头文件是否包含完整（无遗漏的 `#include`）。
 
-### 总结
+#### 总结
 1. `CMoveShapeCmd` 构造函数报错的核心是**成员声明缺失/顺序错误**或**依赖不完整**；
 2. 修复关键：声明所有成员变量、保证初始化列表顺序匹配、拷贝选中列表避免悬空引用；
 3. 依赖保证：确保 `IShape` 有 `Move` 方法，`CMFC_drawDoc` 有 `GetSelected` 方法，头文件包含完整。
@@ -2695,15 +2695,15 @@ void CMFC_drawView::OnMouseMove(UINT nFlags, CPoint point) {
 ## AI回答：MFC绘图板核心功能单元测试示例（基于VS Test Framework）
 针对你实现的 `CMoveShapeCmd`、`CommandManager` 等核心类，以下是**完整的单元测试步骤+示例代码**，基于Visual Studio自带的「Microsoft Test Framework」（VS2019/2022通用），无需额外第三方框架，适配MFC项目特性。
 
-## 一、核心前提
+### 一、核心前提
 单元测试的核心是**测试“纯逻辑”**（避开MFC界面依赖）：
 - 测试 `IShape` 子类的 `Move` 方法是否正确；
 - 测试 `CMoveShapeCmd` 的 `Execute/Undo` 是否互逆；
 - 测试 `CommandManager` 的 Undo/Redo 栈逻辑是否符合预期；
 - 所有测试不依赖绘图界面（`CDC`/`CView`），仅测试数据逻辑。
 
-## 二、步骤1：准备单元测试项目（VS操作）
-### 1.1 创建单元测试项目
+### 二、步骤1：准备单元测试项目（VS操作）
+#### 1.1 创建单元测试项目
 1. 打开你的MFC绘图板项目解决方案；
 2. 右键解决方案 → 「添加」→ 「新建项目」；
 3. 搜索「单元测试项目」（C++）→ 命名为 `DrawUnitTest` → 确定；
@@ -2713,15 +2713,15 @@ void CMFC_drawView::OnMouseMove(UINT nFlags, CPoint point) {
    - 「常规」→ 「MFC的使用」：选择「在静态库中使用MFC」（关键：避免MFC依赖报错）；
    - 「C/C++」→ 「预处理器」→ 「预处理器定义」：添加 `_AFXDLL;UNICODE;_UNICODE`（与主项目一致）。
 
-### 1.2 引用核心代码
+#### 1.2 引用核心代码
 将需要测试的类（`IShape`、`CMoveShapeCmd`、`CommandManager` 等）的**头文件+源文件**添加到测试项目（或编译为主项目静态库，测试项目引用库）：
 - 右键 `DrawUnitTest` → 「添加」→ 「现有项」；
 - 选择主项目的 `IShape.h`、`DrawCommand.h`、`DrawCommand.cpp` 等文件。
 
-## 三、步骤2：编写单元测试用例（核心）
+### 三、步骤2：编写单元测试用例（核心）
 以下是针对 `CMoveShapeCmd` 和 `CommandManager` 的核心测试用例，所有测试不依赖界面，仅验证逻辑正确性。
 
-### 2.1 先实现“测试用的IShape子类”（模拟直线类）
+#### 2.1 先实现“测试用的IShape子类”（模拟直线类）
 为了测试 `Move` 方法，实现一个极简的 `TestLineShape`（无绘图依赖）：
 ```cpp
 // TestShape.h（测试项目中新增）
@@ -2757,7 +2757,7 @@ private:
 };
 ```
 
-### 2.2 编写测试用例（DrawUnitTest.cpp）
+#### 2.2 编写测试用例（DrawUnitTest.cpp）
 ```cpp
 // DrawUnitTest.cpp
 #include "pch.h"
@@ -2885,7 +2885,7 @@ public:
 };
 ```
 
-## 四、步骤3：执行单元测试（VS操作）
+### 四、步骤3：执行单元测试（VS操作）
 1. 确保测试项目和主项目均编译通过（Debug模式）；
 2. 打开VS的「测试资源管理器」（顶部菜单栏 → 测试 → 测试资源管理器）；
 3. 点击「全部运行」，VS会自动执行所有 `TEST_METHOD` 标记的用例；
@@ -2894,33 +2894,33 @@ public:
    - ❌ 红色叉号：用例失败（点击可查看断言错误详情）；
    - ⚠️ 黄色警告：需检查代码逻辑。
 
-## 五、步骤4：测试结果分析与扩展
-### 5.1 常见失败原因及修复
+### 五、步骤4：测试结果分析与扩展
+#### 5.1 常见失败原因及修复
 | 测试失败场景                | 原因分析                          | 修复方案                                  |
 |-----------------------------|-----------------------------------|-------------------------------------------|
 | `TestExecute_MoveShape` 失败 | `Move` 方法偏移量计算错误        | 检查 `TestLineShape::Move` 的 `Offset` 调用 |
 | `TestUndoRedo_Stack` 失败    | `CommandManager::Redo` 逻辑错误  | 验证Redo栈弹出后是否重新压入Undo栈        |
 | 编译报错“找不到MFC头文件”    | 测试项目未配置MFC使用方式        | 项目属性→常规→MFC的使用：选择静态库使用MFC |
 
-### 5.2 扩展测试用例（可选）
+#### 5.2 扩展测试用例（可选）
 可针对其他核心功能补充测试：
 1. `CDrawShapeCmd`：测试绘制命令的 `Execute/Undo` 是否正确添加/删除图形；
 2. `CDeleteShapeCmd`：测试删除命令的撤销是否恢复图形到原位置；
 3. `CommandManager` 栈容量限制：测试超过50步后是否删除最旧命令。
 
-## 六、关键注意事项
+### 六、关键注意事项
 1. **避开界面依赖**：单元测试只测“数据逻辑”，不涉及 `CView`/`CDC` 等界面类；
 2. **测试独立性**：每个 `TEST_METHOD` 是独立的，测试数据互不干扰（比如每个用例重新实例化 `CMFC_drawDoc`）；
 3. **断言精准**：优先验证“核心数值”（比如图形坐标、栈长度），而非模糊的“是否执行”；
 4. **健壮性测试**：补充“空数据”“边界值”测试（比如空选中列表、偏移量为0），避免程序崩溃。
 
-## 总结
+### 总结
 ### 核心步骤回顾
 1. **环境准备**：VS创建单元测试项目，配置MFC依赖和头文件路径；
 2. **模拟依赖**：实现无界面的 `TestLineShape`，避开绘图相关逻辑；
 3. **编写用例**：按“准备数据→执行操作→断言验证”三步编写测试，覆盖核心逻辑（Execute/Undo/栈管理）；
 4. **执行分析**：通过测试资源管理器运行用例，根据结果修复逻辑漏洞。
 
-### 核心价值
+#### 核心价值
 单元测试可提前发现 `CMoveShapeCmd`、`CommandManager` 等核心类的逻辑错误（比如Undo未正确逆操作、Redo栈未清空），避免在界面测试中才暴露问题，提升代码可靠性。
    
