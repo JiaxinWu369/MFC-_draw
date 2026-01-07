@@ -1,13 +1,11 @@
 # advanced-programming
-advanced programming
 # 简易绘图板 - AI交流日志
 记录与AI的交流过程、问题解决、代码迭代等内容，用于项目复盘和知识沉淀。
-
 ## 基本信息
 -
  项目名称：简易绘图板
 -
- 开始时间：2025-12-13
+ 开始时间：2025-12-11
 -
  技术栈：MFC、C++、Windows SDK
 
@@ -192,7 +190,7 @@ private:
     std::vector<std::unique_ptr<ICommand>> m_redoStack;
 };
 ```
-### 2025-12-11 问题：基本图形绘制
+### 2025-12-12 问题：基本图形绘制
 #### 问题描述
 ##### GDI 句柄 RAII 包装与错误处理
 开发场景：实现功能 F-07（错误处理），基于 RAII 模式封装 GDI 对象，确保资源安全释放  
@@ -249,4 +247,160 @@ private:
     T* m_pObject;
     bool m_own; // 是否拥有对象所有权
 };
+```
+### 搭建 MFC 绘图板基础框架
+#### 使用时间：2025-12-12
+对话背景：新建 MFC 单文档项目后，先搭建绘图板核心框架，需要定义绘制相关变量和空函数  
+Prompt：  
+需求：帮我搭个MFC单文档绘图板的基础框架，在View类里定义绘制需要的坐标变量、绘制状态标记，留好鼠标按下、松开、移动的空函数  
+约束：变量名简单好懂，函数只留空壳，不用写具体逻辑  
+输出：标注好变量和函数该加在哪个文件（.h/.cpp），代码直接能用  
+```cpp
+// CMFCdrawView.h 中添加变量
+private:
+    CPoint m_startPoint; // 绘制起点
+    CPoint m_endPoint;   // 绘制终点
+    BOOL m_isDrawing;    // 是否正在绘制
+
+// CMFCdrawView.cpp 中添加空函数
+void CMFCdrawView::OnLButtonDown(UINT nFlags, CPoint point)
+{
+    CView::OnLButtonDown(nFlags, point);
+}
+
+void CMFCdrawView::OnLButtonUp(UINT nFlags, CPoint point)
+{
+    CView::OnLButtonUp(nFlags, point);
+}
+
+void CMFCdrawView::OnMouseMove(UINT nFlags, CPoint point)
+{
+    CView::OnMouseMove(nFlags, point);
+}
+```
+Prompt：添加代码后编译报错 “m_startPoint 未定义”，变量没初始化导致编译失败
+```cpp
+// CMFCdrawView.h
+private:
+    CPoint m_startPoint; // 绘制起点
+    CPoint m_endPoint;   // 绘制终点
+    BOOL m_isDrawing;    // 是否正在绘制
+public:
+   CMFCdrawView(); // 声明构造函数，用于初始化变量
+
+// CMFCdrawView.cpp
+// 新增构造函数，初始化变量（解决未定义报错）
+CMFCdrawView::CMFCdrawView()
+{
+   m_isDrawing = FALSE; // 初始为未绘制状态
+   m_startPoint = CPoint(0, 0);
+   m_endPoint = CPoint(0, 0);
+}
+
+void CMFCdrawView::OnLButtonDown(UINT nFlags, CPoint point)
+{
+    CView::OnLButtonDown(nFlags, point);
+}
+```
+### 实现鼠标按下记录绘制起点
+#### 使用时间：2025-12-12
+对话背景：框架搭好后，先完善最基础的鼠标交互 —— 按下鼠标记录绘制起点  
+Prompt：  
+需求：在刚才搭的框架里完善OnLButtonDown函数，鼠标左键按下时把点击坐标存到m_startPoint，把m_isDrawing设为TRUE  
+约束：用之前定义的变量，加简单注释，保证坐标能存上  
+输出：修改后的OnLButtonDown函数代码  
+```cpp
+void CMFCdrawView::OnLButtonDown(UINT nFlags, CPoint point)
+{
+    // 记录绘制起点坐标
+    m_startPoint = point;
+    // 标记为正在绘制状态
+    m_isDrawing = TRUE;
+    CView::OnLButtonDown(nFlags, point);
+}
+```
+Prompt：运行后点击鼠标无报错，但后续读取 m_startPoint 时还是初始值（0,0）
+```cpp
+void CMFCdrawView::OnLButtonDown(UINT nFlags, CPoint point)
+{
+    // 记录绘制起点坐标
+    m_startPoint = point;
+    // 标记为正在绘制状态
+    m_isDrawing = TRUE;
+   // 新增：刷新界面确保变量赋值生效
+    UpdateWindow();
+    CView::OnLButtonDown(nFlags, point);
+}
+```
+### 鼠标松开绘制直线
+#### 使用时间：2025-12-12
+对话背景：能记录起点后，想实现鼠标松开画直线，写代码遇到程序崩溃  
+Prompt：  
+需求：完善OnLButtonUp函数，鼠标松开时用红色、2像素宽的画笔，从m_startPoint画到当前鼠标位置  
+约束：基于之前的代码，确保能画出直线，不崩溃  
+输出：修改后的OnLButtonUp函数代码  
+```cpp
+void CMFCdrawView::OnLButtonUp(UINT nFlags, CPoint point)
+{
+    m_isDrawing = FALSE;
+    m_endPoint = point;
+    CDC* pDC = GetDC();
+    // 画红色直线
+    CPen redPen;
+    pDC->SelectObject(&redPen);
+    pDC->MoveTo(m_startPoint);
+    pDC->LineTo(m_endPoint);
+    ReleaseDC(pDC);
+    CView::OnLButtonUp(nFlags, point);
+}
+```
+### 调整画笔宽度
+#### 使用时间：2025-12-12
+对话背景：直线能画了，但想把画笔宽度改成 3 像素，直接改数字后宽度没变化   
+Prompt：  
+需求：把画直线的画笔宽度改成3像素，我直接改CreatePen里的数字后宽度没变化，帮我改代码并说明原因  
+约束：基于之前的OnLButtonUp函数，说明为啥改数字没用  
+输出：修改后的代码+简单说明  
+```cpp
+void CMFCdrawView::OnLButtonUp(UINT nFlags, CPoint point)
+{
+    m_isDrawing = FALSE;
+    m_endPoint = point;
+    CDC* pDC = GetDC();
+    // 画红色直线，宽度3像素
+    CPen redPen;
+    // 宽度必须在CreatePen里修改才生效，改其他地方没用
+    redPen.CreatePen(PS_SOLID, 3, RGB(255, 0, 0));
+    pDC->SelectObject(&redPen);
+    pDC->MoveTo(m_startPoint);
+    pDC->LineTo(m_endPoint);
+    pDC->SelectStockObject(BLACK_PEN);
+    ReleaseDC(pDC);
+    CView::OnLButtonUp(nFlags, point);
+}
+```
+Prompt：无报错，但宽度仍为 2 像素
+```cpp
+void CMFCdrawView::OnLButtonUp(UINT nFlags, CPoint point)
+{
+    m_isDrawing = FALSE;
+    m_endPoint = point;
+    CDC* pDC = GetDC();
+    // 画红色直线，宽度3像素
+    CPen redPen;
+    // 宽度必须在CreatePen里修改才生效，改其他地方没用
+    redPen.CreatePen(PS_SOLID, 3, RGB(255, 0, 0));
+    // 新增：判断画笔创建是否成功，避免创建失败导致宽度无效
+    if (!redPen)
+    {
+        MessageBox(_T("画笔创建失败"));
+        return;
+   }
+    pDC->SelectObject(&redPen);
+    pDC->MoveTo(m_startPoint);
+    pDC->LineTo(m_endPoint);
+    pDC->SelectStockObject(BLACK_PEN);
+    ReleaseDC(pDC);
+    CView::OnLButtonUp(nFlags, point);
+}
 ```
