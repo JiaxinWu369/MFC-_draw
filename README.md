@@ -14,9 +14,9 @@ advanced programming
 ## 日志正文
 ### 2025-12-10 问题：画布初始化，双缓冲防止闪烁
 #### 问题描述
-画布初始化（双缓冲 + Strategy 模式）
-• 开发场景：实现功能 F-01（画布初始化，双缓冲防止闪烁），基于 Strategy 模式设计 IRenderStrategy 接口
-• Prompt：基于MFC CScrollView实现绘图板画布，要求：1. 双缓冲绘制防止闪烁；2. 遵循Strategy模式定义IRenderStrategy接口，支持不同渲染方式切换；3. 适配Windows 10/11 x64，VS2022环境；4. 符合RAII规范管理GDI句柄。请提供完整的头文件和cpp文件核心代码。
+##### 画布初始化（双缓冲 + Strategy 模式）
+开发场景：实现功能 F-01（画布初始化，双缓冲防止闪烁），基于 Strategy 模式设计 IRenderStrategy 接口。  
+Prompt：基于MFC CScrollView实现图板画布，要求：1.双缓冲绘制防止闪烁；2.遵循Strategy模式定义IRenderStrategy接口，支持不同渲染方式切换；3.适配Windows 10/11 x64，VS2022环境；4.符合RAII规范管理GDI句柄。请提供完整的头文件和cpp文件核心代码。
 ```cpp
 // IRenderStrategy.h
 #pragma once
@@ -71,9 +71,9 @@ protected:
 ```
 ### 2025-12-11 问题：基本图形绘制
 #### 问题描述
-图形工厂实现（ShapeFactory）
-• 开发场景：实现功能 F-02（基本图形绘制），基于 Factory 模式创建 ShapeFactory 类，支持直线、矩形、椭圆绘制
-• Prompt：基于MFC GDI+实现图形绘制工厂：1. 定义抽象基类IShape，包含纯虚函数Draw(CDC*)和SetAttributes(COLORREF, int)；2. 实现LineShape、RectShape、EllipseShape子类；3. 创建ShapeFactory类，提供CreateShape(ShapeType)静态方法；4. 支持颜色和线宽设置，适配项目的属性面板数据。
+##### 图形工厂实现（ShapeFactory）
+开发场景：实现功能 F-02（基本图形绘制），基于 Factory 模式创建 ShapeFactory 类，支持直线、矩形、椭圆绘制  
+Prompt：基于MFC GDI+实现图形绘制工厂：1. 定义抽象基类IShape，包含纯虚函数Draw(CDC*)和SetAttributes(COLORREF, int)；2. 实现LineShape、RectShape、EllipseShape子类；3. 创建ShapeFactory类，提供CreateShape(ShapeType)静态方法；4. 支持颜色和线宽设置，适配项目的属性面板数据。
 ```cpp
 // ShapeType.h
 enum class ShapeType { Line, Rect, Ellipse };
@@ -125,9 +125,9 @@ public:
 ```
 ### 2025-12-11 问题：撤销 / 重做
 #### 问题描述
-撤销 / 重做功能（Command 模式）
-• 开发场景：实现功能 F-04（撤销 / 重做），基于 Command 模式设计命令栈，管理图形绘制操作
-• Prompt：基于MFC实现绘图板的撤销/重做功能：1. 定义ICommand抽象接口，包含Execute()、Undo()、Redo()方法；2. 实现DrawShapeCommand类，封装IShape对象的绘制和删除；3. 设计CommandStack类，维护Undo栈和Redo栈，支持PushCommand、Undo、Redo方法；4. 线程安全，适配项目的TaskScheduler单例。
+##### 撤销 / 重做功能（Command 模式）
+开发场景：实现功能 F-04（撤销 / 重做），基于 Command 模式设计命令栈，管理图形绘制操作  
+Prompt：基于MFC实现绘图板的撤销/重做功能：1. 定义ICommand抽象接口，包含Execute()、Undo()、Redo()方法；2. 实现DrawShapeCommand类，封装IShape对象的绘制和删除；3. 设计CommandStack类，维护Undo栈和Redo栈，支持PushCommand、Undo、Redo方法；4. 线程安全，适配项目的TaskScheduler单例。
 ```cpp
 // ICommand.h
 #pragma once
@@ -194,9 +194,9 @@ private:
 ```
 ### 2025-12-11 问题：基本图形绘制
 #### 问题描述
-GDI 句柄 RAII 包装与错误处理
-• 开发场景：实现功能 F-07（错误处理），基于 RAII 模式封装 GDI 对象，确保资源安全释放
-• Prompt：实现MFC GDI对象的RAII包装类：1. 支持CPen、CBrush、CImage、CFont等常用GDI对象；2. 构造函数创建对象，析构函数自动释放，支持手动释放；3. 重载->和*运算符，方便访问原始对象；4. 支持移动语义，禁止拷贝；5. 集成项目的LogWriter，记录创建和释放日志。
+##### GDI 句柄 RAII 包装与错误处理
+开发场景：实现功能 F-07（错误处理），基于 RAII 模式封装 GDI 对象，确保资源安全释放  
+Prompt：实现MFC GDI对象的RAII包装类：1. 支持CPen、CBrush、CImage、CFont等常用GDI对象；2. 构造函数创建对象，析构函数自动释放，支持手动释放；3. 重载->和*运算符，方便访问原始对象；4. 支持移动语义，禁止拷贝；5. 集成项目的LogWriter，记录创建和释放日志。
 ```cpp
 // CGdiObjectWrapper.h
 #pragma once
